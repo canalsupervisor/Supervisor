@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Portal do Supervisor da Prática - Senac PR</title>
+    
+    <!-- Ícones (FontAwesome) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* =========================================
+           ESTILO VISUAL (CSS NATIVO)
+           ========================================= */
+        :root {
+            --senac-blue: #004587;
+            --senac-dark-blue: #003366;
+            --senac-orange: #F68B1F;
+            --senac-green: #16a34a;
+            --bg-color: #f8fafc;
+            --text-color: #374151;
+            --border-color: #e5e7eb;
+            --white: #ffffff;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Roboto', 'Segoe UI', 'Arial', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            line-height: 1.5;
+            overflow-y: auto;
+        }
+
+        body.locked { overflow: hidden !important; height: 100vh; }
+
+        a { text-decoration: none; color: inherit; }
+        ul { list-style: none; }
+        img { max-width: 100%; display: block; }
+        button { cursor: pointer; border: none; background: none; font-family: inherit; }
+
+        /* Utilitários */
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+        .hidden-section { display: none !important; }
+        
+        /* =========================================
+           TELA DE LOGIN
+           ========================================= */
+        /* TELA DE LOGIN SIMPLIFICADA */
+        #login-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, var(--senac-blue) 0%, var(--senac-dark-blue) 100%);
+            z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .login-box {
+            background: white; padding: 50px 40px; border-radius: 12px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            width: 90%; max-width: 400px; text-align: center;
+        }
+        .login-title { color: var(--senac-blue); margin-bottom: 10px; font-size: 1.5rem; font-weight: bold; }
+        .login-desc { color: #666; font-size: 14px; margin-bottom: 30px; line-height: 1.6; }
+
+        /* Campo de Senha */
+        .password-container { position: relative; margin-bottom: 20px; text-align: left; }
+        .password-label { font-size: 12px; font-weight: bold; color: var(--senac-blue); margin-bottom: 5px; display: block; text-transform: uppercase; }
+        .password-input {
+            width: 100%; padding: 12px 15px; font-size: 16px;
+            border: 2px solid #e5e7eb; border-radius: 6px; outline: none;
+            transition: border-color 0.2s;
+        }
+        .password-input:focus { border-color: var(--senac-orange); }
+        .password-input.error { border-color: #dc2626; background-color: #fef2f2; }
+        
+        .error-msg { 
+            color: #dc2626; font-size: 13px; margin-top: 5px; display: none; font-weight: bold;
+            align-items: center; gap: 5px;
+        }
+
+        .btn-primary {
+            width: 100%; background-color: var(--senac-orange); color: white;
+            font-weight: bold; padding: 14px; border-radius: 6px;
+            font-size: 16px; transition: background 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .btn-primary:hover { background-color: #d97706; }
+
+        /* =========================================
+           MENU E NAVEGAÇÃO
+           ========================================= */
+        .navbar { background-color: white; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); position: sticky; top: 0; z-index: 90; }
+        .nav-content { display: flex; justify-content: space-between; align-items: center; height: 80px; }
+        .logo-area { display: flex; align-items: center; }
+        .logo-area img { height: 40px; margin-right: 15px; }
+        .logo-text { font-size: 1.125rem; font-weight: bold; color: var(--senac-blue); border-left: 1px solid #ddd; padding-left: 15px; }
+        .nav-links { display: flex; gap: 5px; }
+        .nav-btn { padding: 26px 15px; font-weight: 600; color: #6b7280; border-bottom: 3px solid transparent; transition: all 0.3s; }
+        .nav-btn:hover { color: var(--senac-blue); }
+        .nav-btn.active { color: var(--senac-blue); border-bottom-color: var(--senac-orange); }
+        
+        .navbar-actions { display: flex; align-items: center; gap: 10px; }
+        .blackboard-btn { background-color: var(--senac-blue); color: white; padding: 10px 20px; border-radius: 6px; font-weight: 500; font-size: 0.875rem; transition: background 0.3s; }
+        .blackboard-btn:hover { background-color: var(--senac-dark-blue); }
+        .logout-btn { color: #dc2626; font-weight: bold; font-size: 0.875rem; padding: 10px; border: 1px solid #fee2e2; border-radius: 6px; transition: 0.3s; }
+        .logout-btn:hover { background-color: #fef2f2; }
+
+
+        /* =========================================
+           ESTILOS GERAIS
+           ========================================= */
+        .hero { background: linear-gradient(to right, var(--senac-blue), var(--senac-dark-blue)); color: white; padding: 60px 0; text-align: center; }
+        .hero h1 { font-size: 2.25rem; margin-bottom: 10px; }
+        
+        /* --- ESTILOS BOAS-VINDAS --- */
+        .welcome-section {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 60px 0;
+            background-color: var(--senac-blue);
+            margin: 0 -20px 0 -20px; 
+        }
+        .welcome-card {
+            background-color: var(--white);
+            border-radius: 16px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            width: 100%;
+            max-width: 1060px; 
+            text-align: left;
+        }
+        .welcome-title {
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--senac-dark-blue);
+            margin-bottom: 20px;
+            border-bottom: 3px solid var(--senac-orange);
+            padding-bottom: 10px;
+        }
+        .welcome-text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #1f2937;
+        }
+        .welcome-text strong {
+            color: var(--senac-dark-blue); 
+            font-weight: 900;
+        }
+        .welcome-card::after {
+            content: '';
+            display: block;
+            height: 10px;
+            background-color: var(--senac-dark-blue);
+            border-radius: 0 0 16px 16px; 
+            margin: 40px -40px -40px -40px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1) inset;
+        }
+
+        /* --- ESTILOS CRONOGRAMA (TIMELINE) --- */
+        .timeline-container { position: relative; padding: 40px 0; }
+        .timeline-line::before { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: 4px; background: #e2e8f0; transform: translateX(-50%); z-index: 0; }
+        .phase-badge { position: relative; z-index: 10; margin-bottom: 50px; text-align: center; }
+        .phase-badge span { display: inline-block; padding: 8px 24px; border-radius: 50px; font-weight: bold; font-size: 0.875rem; text-transform: uppercase; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 4px solid var(--bg-color); color: white; }
+        .phase-blue span { background: var(--senac-blue); }
+        .phase-orange span { background: var(--senac-orange); }
+        .phase-green span { background: var(--senac-green); }
+        .timeline-step { display: flex; align-items: center; justify-content: space-between; margin-bottom: 40px; position: relative; }
+        .step-content {
+            width: 45%; background: white; padding: 20px; border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); z-index: 1; transition: transform 0.2s;
+        }
+        .step-content:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .step-content h3 { color: var(--senac-blue); font-size: 1.125rem; margin-bottom: 5px; }
+        .step-content p { font-size: 0.875rem; color: #4b5563; }
+        .step-number {
+            width: 50px; height: 50px; border-radius: 50%;
+            background: var(--senac-blue); color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 1.125rem;
+            border: 4px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); z-index: 10;
+        }
+        .step-number.bg-orange { background: var(--senac-orange); }
+        .step-number.bg-green { background: var(--senac-green); }
+        .border-left-orange { border-left: 4px solid var(--senac-orange); }
+        .border-right-blue { border-right: 4px solid var(--senac-blue); text-align: right; }
+        .border-left-blue { border-left: 4px solid var(--senac-blue); }
+        .border-right-orange { border-right: 4px solid var(--senac-orange); text-align: right; }
+        .border-left-green { border-left: 4px solid var(--senac-green); }
+        .border-right-green { border-right: 4px solid var(--senac-green); text-align: right; }
+        .empty-space { width: 45%; }
+        .link-btn {
+            display: inline-flex; align-items: center;
+            background-color: #eff6ff; color: var(--senac-blue);
+            padding: 6px 12px; border-radius: 6px;
+            font-size: 0.75rem; font-weight: bold; margin-top: 10px;
+        }
+        .link-btn:hover { background-color: #dbeafe; }
+
+        /* Estilos para as Imagens "Soltas" na Timeline (Arte) */
+        .timeline-art {
+            position: absolute;
+            z-index: 5; 
+            width: 250px; 
+            max-width: 30vw;
+            opacity: 0.95; 
+            transition: transform 0.3s, opacity 0.3s;
+            background: var(--white); 
+            border-radius: 12px;
+            padding: 5px; 
+        }
+        .timeline-art img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3); 
+        }
+        /* Posicionamento Ajustado para as EXTREMIDADES LATERAIS (Pixels Fixos) */
+        .timeline-art.art-1 { top: 250px; left: -300px; transform: rotate(-7deg); }
+        .timeline-art.art-2 { top: 600px; right: -300px; left: auto; transform: rotate(10deg); }
+        .timeline-art.art-3 { top: 1100px; left: -300px; transform: rotate(-4deg); }
+
+        /* --- DOCS & EQUIPE --- */
+        .search-bar-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
+        .search-input { padding: 10px 20px; border: 1px solid #ccc; border-radius: 50px; width: 300px; outline: none; }
+        .search-input:focus { border-color: var(--senac-orange); }
+        .grid-docs { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; margin-bottom: 40px; }
+        .doc-card { background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; transition: 0.2s; }
+        .doc-card:hover { border-color: #bfdbfe; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .doc-header { display: flex; gap: 15px; }
+        .icon-box { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 1.25rem; flex-shrink: 0; }
+        .ib-blue { background: #eff6ff; color: var(--senac-blue); }
+        .ib-orange { background: #fff7ed; color: var(--senac-orange); }
+        .doc-info h4 { font-weight: bold; color: #1f2937; margin-bottom: 5px; font-size: 1rem; }
+        .doc-info p { font-size: 0.75rem; color: #6b7280; margin-bottom: 10px; }
+        .download-link { font-size: 0.875rem; font-weight: bold; color: var(--senac-blue); display: inline-flex; align-items: center; }
+        .download-link:hover { text-decoration: underline; }
+        .text-orange-hover:hover { color: var(--senac-orange); }
+        
+        .member-card { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; display: flex; align-items: flex-start; }
+        .avatar { width: 50px; height: 50px; border-radius: 50%; background: var(--senac-blue); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 15px; flex-shrink: 0; font-size: 1.2rem; }
+        .avatar-gray { background: #9ca3af; }
+        .member-info h3 { font-size: 1rem; font-weight: bold; color: #1f2937; }
+        .member-role { font-size: 0.75rem; font-weight: bold; color: var(--senac-orange); text-transform: uppercase; margin-bottom: 8px; }
+        .member-contact a { display: flex; align-items: center; font-size: 0.875rem; color: #4b5563; margin-top: 4px; }
+        .member-contact a:hover { color: var(--senac-blue); }
+        .member-contact i { width: 20px; text-align: center; margin-right: 12px; } 
+
+        /* --- FOOTER & MOBILE --- */
+        footer { background-color: var(--senac-dark-blue); color: white; padding: 50px 0 20px; margin-top: auto; }
+        .footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 40px; margin-bottom: 40px; }
+        .footer-col h4 { font-size: 1.125rem; font-weight: bold; margin-bottom: 15px; }
+        .footer-col a:hover { color: var(--senac-orange); }
+        .footer-bottom { border-top: 1px solid #1e40af; padding-top: 20px; text-align: center; font-size: 0.75rem; color: #9ca3af; }
+        .mobile-menu-btn { display: none; font-size: 24px; color: #6b7280; }
+        .mobile-menu-dropdown { display: none; background: #f9fafb; border-top: 1px solid #eee; }
+        .mobile-link { display: block; padding: 12px 20px; color: var(--senac-blue); font-weight: 600; border-bottom: 1px solid #eee; width: 100%; text-align: left;}
+
+        /* MEDIA QUERIES */
+        @media (max-width: 1400px) {
+            .timeline-art {
+                width: 200px;
+                max-width: 20vw;
+            }
+            .timeline-art.art-1 { left: -250px; }
+            .timeline-art.art-2 { right: -250px; }
+            .timeline-art.art-3 { left: -250px; }
+        }
+
+        @media (max-width: 1000px) {
+            .timeline-art { display: none; }
+        }
+
+        @media (max-width: 768px) {
+            /* Mobile Nav */
+            .nav-links, .blackboard-btn, .logo-text, .logout-btn { display: none; }
+            .navbar-actions { display: none; } /* Esconde ações no mobile para usar o menu dropdown */
+            .mobile-menu-btn { display: block; }
+
+            /* Mobile Timeline */
+            .timeline-line::before { left: 30px; }
+            .timeline-step { flex-direction: column; align-items: flex-start; margin-left: 0; }
+            .empty-space { display: none; }
+            .step-content { width: 100%; margin-left: 60px; margin-top: -40px; }
+            .border-right-blue, .border-right-orange, .border-right-green { text-align: left; border-right: none; border-left: 4px solid; }
+            .border-right-blue { border-left-color: var(--senac-blue); }
+            .border-right-orange { border-left-color: var(--senac-orange); }
+            .border-right-green { border-left-color: var(--senac-green); }
+
+            /* Mobile Welcome Card fix */
+            .welcome-section { margin: 0; padding: 40px 10px; }
+            .welcome-card::after { margin: 40px -20px -20px -20px; border-radius: 0 0 16px 16px; }
+        }
+    </style>
+</head>
+<body id="main-body" class="locked">
+
+    <!-- LOGIN SCREEN (SENHA ÚNICA) -->
+    <div id="login-screen">
+        <div class="login-box">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac Logo" style="height: 60px; margin: 0 auto 20px;">
+            <h2 class="login-title">Acesso Restrito</h2>
+            <p class="login-desc">Insira a senha padrão enviada no e-mail de convite para acessar o portal.</p>
+            
+            <form onsubmit="event.preventDefault(); checkPassword();">
+                <div class="password-container">
+                    <label class="password-label">Senha de Acesso</label>
+                    <input type="password" id="password-input" class="password-input" placeholder="Digite a senha..." required>
+                    <div id="error-msg" class="error-msg"><i class="fas fa-exclamation-circle"></i> Senha incorreta. Tente novamente.</div>
+                </div>
+
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-unlock-alt"></i> Acessar Portal
+                </button>
+            </form>
+            
+            <p style="font-size: 12px; color: #999; margin-top: 30px;">Senac PR &bull; Departamento Regional</p>
+        </div>
+    </div>
+
+    <!-- CONTEÚDO (Oculto até o login) -->
+    <div id="site-content" class="hidden-section">
+        <nav class="navbar">
+            <div class="container nav-content">
+                <div class="logo-area">
+                    <a href="#" onclick="switchTab('boas-vindas')" style="display: flex; align-items: center;">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Logo">
+                        <span class="logo-text">Portal do Supervisor</span>
+                    </a>
+                </div>
+                <div class="nav-links">
+                    <!-- NOVA ABA: BOAS-VINDAS (ATIVADA POR PADRÃO) -->
+                    <button onclick="switchTab('boas-vindas')" id="btn-boas-vindas" class="nav-btn active">Boas-Vindas</button>
+                    <!-- CRONOGRAMA (AGORA A SEGUNDA ABA, INATIVA POR PADRÃO) -->
+                    <button onclick="switchTab('cronograma')" id="btn-cronograma" class="nav-btn">Cronograma</button>
+                    <button onclick="switchTab('documentos')" id="btn-documentos" class="nav-btn">Documentos</button>
+                    <button onclick="switchTab('equipe')" id="btn-equipe" class="nav-btn">Equipe</button>
+                </div>
+                
+                <div class="navbar-actions">
+                    <button onclick="logout()" class="logout-btn">Sair</button>
+                    <a href="https://senac.blackboard.com/" target="_blank" class="blackboard-btn">Acessar BlackBoard</a>
+                </div>
+                
+                <button class="mobile-menu-btn" onclick="toggleMobileMenu()"><i class="fas fa-bars"></i></button>
+            </div>
+            
+            <!-- Mobile Menu -->
+            <div class="mobile-menu-dropdown" id="mobile-menu">
+                <button onclick="switchTab('boas-vindas')" class="mobile-link">Boas-Vindas</button>
+                <button onclick="switchTab('cronograma')" class="mobile-link">Cronograma</button>
+                <button onclick="switchTab('documentos')" class="mobile-link">Documentos</button>
+                <button onclick="switchTab('equipe')" class="mobile-link">Equipe</button>
+                <button onclick="logout()" class="mobile-link" style="color: red;">Sair do Sistema</button>
+            </div>
+        </nav>
+
+        <div class="hero">
+            <div class="container">
+                <h1 id="hero-title">Bem-Vindo(a) Supervisor(a)!</h1>
+                <p id="hero-subtitle">Portal de apoio para a supervisão da Prática Profissional do Senac PR.</p>
+            </div>
+        </div>
+
+        <main class="container" style="padding-top: 40px; padding-bottom: 40px; flex-grow: 1;">
+            
+            <!-- NOVA ABA: BOAS-VINDAS (Ativa por padrão ao carregar) -->
+            <div id="view-boas-vindas" class="welcome-section">
+                <div class="welcome-card">
+                    <h2 class="welcome-title">APRESENTAÇÃO</h2>
+                    <div class="welcome-text">
+                        <p>É com grande satisfação que damos as <strong>boas-vindas</strong> a você que faz parte da equipe de <strong>Supervisores da Prática Profissional do Senac Paraná</strong>.</p>
+                        <p>A prática profissional é um momento crucial na formação de nossos estudantes. E para que esse período seja um sucesso, contamos com a colaboração e dedicação.</p>
+                        <p>Seu <strong>acompanhamento e orientações</strong> são essenciais para <strong>melhorar o processo educacional</strong> e <strong>fortalecer a parceria entre o Senac e a empresa</strong>, através de monitoramento contínuo, diálogo, observações, orientações e ações preventivas.</p>
+                        <p>Agradecemos por fazer parte da nossa equipe! Conte conosco para qualquer dúvida.</p>
+                        <p class="text-center" style="margin-top: 30px;"><img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac Logo" style="height: 30px; margin: 0 auto;"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CRONOGRAMA -->
+            <div id="view-cronograma" class="timeline-container timeline-line hidden-section">
+                
+                <!-- Arte 1: Decreto N° 11.479 (Extremo esquerdo) -->
+                <div class="timeline-art art-1">
+                    <img src="image_b99941.png" alt="Decreto n° 11.479" title="Decreto n° 11.479 de 6 de Abril de 2023 sobre a profissionalização de jovens e adolescentes" onerror="this.style.display='none'">
+                </div>
+                
+                <div class="phase-badge"><span class="phase-blue"><span>Fase 1: Acesso & Planejamento</span></span></div>
+                
+
+                <div class="timeline-step">
+                    <div class="step-content border-left-orange"><h3>Acesso ao BlackBoard</h3><p>Acesse o portal através do link oficial.</p></div>
+                    <div class="step-number">1</div><div class="empty-space"></div>
+                </div>
+                <div class="timeline-step">
+                    <div class="empty-space"></div><div class="step-number bg-orange">2</div>
+                    <div class="step-content border-right-blue"><h3>Material de Apoio</h3><p>Clique na aba “Material de apoio”.</p></div>
+                </div>
+                <div class="timeline-step">
+                    <div class="step-content border-left-orange"><h3>Download de Documentos</h3><p>Baixar documentos necessários.</p></div>
+                    <div class="step-number">3</div><div class="empty-space"></div>
+                </div>
+                <div class="timeline-step">
+                    <div class="empty-space"></div><div class="step-number bg-orange">4</div>
+                    <div class="step-content border-right-blue"><h3>Região de Atuação</h3><p>Clique na aba da sua região.</p></div>
+                </div>
+                <div class="timeline-step">
+                    <div class="step-content border-left-orange"><h3>Planilha de Planejamento</h3><p>Acesse “Planilha de planejamento – região”.</p></div>
+                    <div class="step-number">5</div><div class="empty-space"></div>
+                </div>
+                <div class="timeline-step">
+                    <div class="empty-space"></div><div class="step-number bg-orange">6</div>
+                    <div class="step-content border-right-blue"><h3>Configuração da Planilha</h3><p>Leia a aba “Avisos” e renomeie as abas.</p></div>
+                </div>
+
+                <div class="phase-badge"><span class="phase-orange"><span>Fase 2: Logística</span></span></div>
+                
+                <!-- Arte 2: Lei n° 10.097 (Extremo direito) -->
+                <div class="timeline-art art-2">
+                    <img src="image_b9995d.png" alt="Lei n° 10.097" title="Lei n° 10.097 de 19 de Dezembro de 2000 que altera dispositivos da CLT" onerror="this.style.display='none'">
+                </div>
+                
+                <div class="timeline-step">
+                    <div class="step-content border-left-blue"><h3>Montar Logística</h3><p>Montar logística na aba de planejamento.</p></div>
+                    <div class="step-number bg-orange">7</div><div class="empty-space"></div>
+                </div>
+                <div class="timeline-step">
+                    <div class="empty-space"></div><div class="step-number">8</div>
+                    <div class="step-content border-right-orange"><h3>Aprovação</h3><p>Avisar ao Polo-PR e aguardar.</p></div>
+                </div>
+                <div class="timeline-step">
+                    <div class="step-content border-left-blue"><h3>Abertura de Viagem</h3><p>Pedido para abertura de viagem.</p></div>
+                    <div class="step-number bg-orange">9</div><div class="empty-space"></div>
+                </div>
+                <div class="timeline-step">
+                    <div class="empty-space"></div><div class="step-number">10</div>
+                    <div class="step-content border-right-orange"><h3>Confirmação</h3><p>Enviar e-mails aos supervisores.</p></div>
+                </div>
+
+                <div class="phase-badge"><span class="phase-green"><span>Fase 3: Execução</span></span></div>
+
+                <div class="timeline-step">
+                    <div class="step-content border-left-orange">
+                        <h3>Baixar Formulário</h3>
+                        <p>Acesse a aba <strong>"Documentos"</strong>.</p>
+                        <button onclick="switchTab('documentos')" class="link-btn">Ir para Documentos &rarr;</button>
+                    </div>
+                    <div class="step-number">11</div><div class="empty-space"></div>
+                </div>
+                <div class="timeline-step">
+                    <div class="empty-space"></div><div class="step-number bg-orange">12</div>
+                    <div class="step-content border-right-blue"><h3>Preenchimento</h3><p>Preencher cabeçalho do formulário.</p></div>
+                </div>
+                
+                <!-- Arte 3: Portaria MTE N° 3.872 (Extremo esquerdo) -->
+                <div class="timeline-art art-3">
+                    <img src="image_b9993e.png" alt="Portaria MTE N° 3.872" title="Portaria MTE n° 3.872 de 21 de Dezembro de 2023 sobre a aprendizagem profissional" onerror="this.style.display='none'">
+                </div>
+                
+                <div class="timeline-step">
+                    <div class="step-content border-left-orange"><h3>Relatório de Desempenho</h3><p>Consultar relatório antes da visita.</p></div>
+                    <div class="step-number">13</div><div class="empty-space"></div>
+                </div>
+                <div class="timeline-step">
+                    <div class="empty-space"></div><div class="step-number bg-orange">14</div>
+                    <div class="step-content border-right-blue"><h3>A Entrevista</h3><p>Entrevista com supervisor e estudante.</p></div>
+                </div>
+
+                <div class="phase-badge"><span class="phase-green"><span>Fase 4: Finalização</span></span></div>
+                <div class="timeline-step">
+                    <div class="step-content border-left-green"><h3>Digitalizar</h3><p>Digitalizar (Turma + Nome). Enviar no AVA.</p></div>
+                    <div class="step-number">15</div><div class="empty-space"></div>
+                </div>
+                <div class="timeline-step">
+                    <div class="empty-space"></div><div class="step-number bg-orange">16</div>
+                    <div class="step-content border-right-green"><h3>Registro na Planilha</h3><p>Preencher dados pós-visita na planilha.</p></div>
+                </div>
+                <div class="timeline-step">
+                    <div class="step-content border-left-orange" style="background-color: #eff6ff;">
+                        <h3>Conclusão</h3>
+                        <p>Sinalizar ao Polo-PR.</p>
+                        <p style="color: var(--senac-green); font-weight: bold; font-size: 0.75rem; text-transform: uppercase; margin-top: 5px;">Processo Finalizado</p>
+                    </div>
+                    <div class="step-number bg-green">17</div><div class="empty-space"></div>
+                </div>
+            </div>
+
+            <!-- DOCUMENTOS -->
+            <div id="view-documentos" class="hidden-section">
+                <div class="search-bar-container">
+                    <h2 style="color: var(--senac-blue); font-size: 1.5rem; font-weight: bold;">Central de Documentos</h2>
+                    <div class="search-input-wrapper">
+                        <input type="text" id="doc-search" onkeyup="filterDocuments()" class="search-input" placeholder="Buscar arquivo...">
+                    </div>
+                </div>
+                
+                <div style="background-color: #fff7ed; border-left: 4px solid #F68B1F; padding: 15px; margin-bottom: 30px; border-radius: 4px;">
+                    <h4 style="margin: 0 0 5px 0; color: #9a3412; font-size: 1rem;">⚠️ Modo Offline Ativado</h4>
+                    <p style="margin: 0; font-size: 0.9rem; color: #c2410c;">
+                        Certifique-se de que a pasta <strong>"documentos"</strong> esteja junto deste arquivo e contenha os arquivos com os nomes exatos abaixo.
+                    </p>
+                </div>
+
+                <div class="doc-section-title"><i class="fas fa-book-reader" style="color: var(--senac-blue); margin-right: 10px;"></i> Guias e Manuais</div>
+                <div class="grid-docs">
+                    <div class="doc-card">
+                        <div class="doc-header">
+                            <div class="icon-box ib-blue"><i class="fas fa-book"></i></div>
+                            <div class="doc-info">
+                                <h4>Manual simplificado</h4><p>Diretrizes gerais.</p>
+                                <a href="documentos/manual_simplificado.pdf" target="_blank" class="download-link">Baixar Arquivo <i class="fas fa-download" style="margin-left: 5px;"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="doc-card">
+                        <div class="doc-header">
+                            <div class="icon-box ib-blue"><i class="fas fa-list-check"></i></div>
+                            <div class="doc-info">
+                                <h4>Guia de Preenchimento</h4><p>Passo a passo rápido.</p>
+                                <a href="documentos/guia_preenchimento.pdf" target="_blank" class="download-link">Baixar Arquivo <i class="fas fa-download" style="margin-left: 5px;"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="doc-card">
+                        <div class="doc-header">
+                            <div class="icon-box ib-blue"><i class="fas fa-info-circle"></i></div>
+                            <div class="doc-info">
+                                <h4>Instrução Completa</h4><p>Detalhes técnicos.</p>
+                                <a href="documentos/instrucao_completa.pdf" target="_blank" class="download-link">Baixar Arquivo <i class="fas fa-download" style="margin-left: 5px;"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="doc-card">
+                        <div class="doc-header">
+                            <div class="icon-box ib-blue"><i class="fas fa-clipboard-list"></i></div>
+                            <div class="doc-info">
+                                <h4>Lista TIP (Horizontal)</h4><p>Referência atualizada.</p>
+                                <a href="documentos/lista_tip.pdf" target="_blank" class="download-link">Baixar Arquivo <i class="fas fa-download" style="margin-left: 5px;"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                     <div class="doc-card">
+                        <div class="doc-header">
+                            <div class="icon-box ib-blue"><i class="fas fa-car"></i></div>
+                            <div class="doc-info">
+                                <h4>OS - Veículo Próprio</h4><p>Ordem de serviço.</p>
+                                <a href="documentos/os_veiculo.pdf" target="_blank" class="download-link">Baixar Arquivo <i class="fas fa-download" style="margin-left: 5px;"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="doc-section-title"><i class="fas fa-file-signature" style="color: var(--senac-orange); margin-right: 10px;"></i> Formulários e Registros</div>
+                <div class="grid-docs">
+                    <div class="doc-card" style="border-left: 4px solid var(--senac-orange);">
+                        <div class="doc-header">
+                            <div class="icon-box ib-orange"><i class="fas fa-file-word"></i></div>
+                            <div class="doc-info">
+                                <h4>Formulário Supervisão 2025</h4><p>Obrigatório.</p>
+                                <a href="documentos/formulario_supervisao.docx" target="_blank" class="download-link text-orange-hover">Baixar Arquivo <i class="fas fa-download" style="margin-left: 5px;"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="doc-card" style="border-left: 4px solid var(--senac-orange);">
+                        <div class="doc-header">
+                            <div class="icon-box ib-orange"><i class="fas fa-file-word"></i></div>
+                            <div class="doc-info">
+                                <h4>ATA - Programa Aprendizagem</h4><p>Inclui manual.</p>
+                                <a href="documentos/ata_programa.docx" target="_blank" class="download-link text-orange-hover">Baixar Arquivo <i class="fas fa-download" style="margin-left: 5px;"></i></a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="doc-card" style="border-left: 4px solid var(--senac-orange);">
+                        <div class="doc-header">
+                            <div class="icon-box ib-orange"><i class="fas fa-folder"></i></div>
+                            <div class="doc-info">
+                                <h4>Capa de Controle</h4><p>Organização física.</p>
+                                <a href="documentos/capa_controle.pdf" target="_blank" class="download-link text-orange-hover">Baixar Arquivo <i class="fas fa-download" style="margin-left: 5px;"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EQUIPE -->
+            <div id="view-equipe" class="hidden-section">
+                <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 30px; margin-bottom: 40px;">
+                    <h2 style="color: var(--senac-blue); border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 25px;">Equipe Pedagógica</h2>
+                    <div class="grid-docs">
+                        <div class="member-card">
+                            <div class="avatar">AP</div>
+                            <div class="member-info">
+                                <h3>Ana Paula</h3><div class="member-role">Analista Pleno</div>
+                                <div class="member-contact">
+                                    <a href="mailto:anapaula.duarte@pr.senac.br"><i class="fas fa-envelope"></i> anapaula.duarte@pr.senac.br</a>
+                                    <a href="https://wa.me/554133145814" target="_blank"><i class="fab fa-whatsapp" style="color: #25D366;"></i> (41) 3314-5814</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="member-card">
+                            <div class="avatar">B</div>
+                            <div class="member-info">
+                                <h3>Bianca</h3><div class="member-role">Analista Pedagógica</div>
+                                <div class="member-contact">
+                                    <a href="mailto:bianca.aresta@pr.senac.br"><i class="fas fa-envelope"></i> bianca.aresta@pr.senac.br</a>
+                                    <a href="https://wa.me/554133145875" target="_blank"><i class="fab fa-whatsapp" style="color: #25D366;"></i> (41) 3314-5875</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="member-card">
+                            <div class="avatar">B</div>
+                            <div class="member-info">
+                                <h3>Bruna</h3><div class="member-role">Analista Pedagógica</div>
+                                <div class="member-contact">
+                                    <a href="mailto:bruna.cunha@pr.senac.br"><i class="fas fa-envelope"></i> bruna.cunha@pr.senac.br</a>
+                                    <a href="https://wa.me/554133145816" target="_blank"><i class="fab fa-whatsapp" style="color: #25D366;"></i> (41) 3314-5816</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="member-card">
+                            <div class="avatar">M</div>
+                            <div class="member-info">
+                                <h3>Mariana</h3><div class="member-role">Analista Pedagógica</div>
+                                <div class="member-contact">
+                                    <a href="mailto:mariana.mello@pr.senac.br"><i class="fas fa-envelope"></i> mariana.mello@pr.senac.br</a>
+                                    <a href="https://wa.me/554133145858" target="_blank"><i class="fab fa-whatsapp" style="color: #25D366;"></i> (41) 3314-5858</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 30px;">
+                    <h2 style="color: var(--senac-blue); border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 25px;">Equipe Administrativa Pedagógica</h2>
+                    <div class="grid-docs">
+                        <div class="member-card">
+                            <div class="avatar avatar-gray">C</div>
+                            <div class="member-info">
+                                <h3>Cristina</h3><div class="member-role" style="color: #6b7280;">Assistente Administrativo</div>
+                                <div class="member-contact">
+                                    <a href="mailto:cristina.maciel@pr.senac.br"><i class="fas fa-envelope"></i> cristina.maciel@pr.senac.br</a>
+                                    <a href="https://wa.me/554133145840" target="_blank"><i class="fab fa-whatsapp" style="color: #25D366;"></i> (41) 3314-5840</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="member-card">
+                            <div class="avatar avatar-gray">L</div>
+                            <div class="member-info">
+                                <h3>Leo</h3><div class="member-role" style="color: #6b7280;">Assistente Administrativo</div>
+                                <div class="member-contact">
+                                    <a href="mailto:leo.santos@pr.senac.br"><i class="fas fa-envelope"></i> leo.santos@pr.senac.br</a>
+                                    <a href="https://wa.me/554133145818" target="_blank"><i class="fab fa-whatsapp" style="color: #25D366;"></i> (41) 3314-5818</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="member-card">
+                            <div class="avatar avatar-gray">N</div>
+                            <div class="member-info">
+                                <h3>Nathalia</h3><div class="member-role" style="color: #6b7280;">Auxiliar Administrativa</div>
+                                <div class="member-contact">
+                                    <a href="mailto:nathalia@pr.senac.br"><i class="fas fa-envelope"></i> nathalia@pr.senac.br</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <div class="container footer-grid">
+                <div class="footer-col">
+                    <h4>Senac PR</h4><p>Serviço Nacional de Aprendizagem Comercial</p><p>Portal interno do Supervisor da Prática Profissional.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Links Rápidos</h4>
+                    <ul>
+                        <li><a href="mailto:cristina.maciel@pr.senac.br">Canal do Supervisor <i class="fas fa-envelope"></i></a></li>
+                        <li><a href="https://wa.me/554133145840" target="_blank">Suporte ao Supervisor <i class="fab fa-whatsapp"></i></a></li>
+                        <li><a href="https://intranet.pr.senac.br/ar/acm/index.asp?" target="_blank">Portal do Colaborador</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Contato</h4><p><a href="mailto:michel.farias@pr.senac.br"><i class="fas fa-envelope"></i> michel.farias@pr.senac.br</a></p><p><a href="https://wa.me/554133145817" target="_blank"><i class="fab fa-whatsapp"></i> (41) 3314-5817</a></p>
+                </div>
+            </div>
+            <div class="container footer-bottom">&copy; 2025 Senac PR. Todos os direitos reservados.</div>
+        </footer>
+    </div>
+
+    <!-- SCRIPT DE LÓGICA SIMPLIFICADA (SENHA ÚNICA) -->
+    <script>
+        // Elementos da DOM
+        const loginScreen = document.getElementById('login-screen');
+        const siteContent = document.getElementById('site-content');
+        const body = document.getElementById('main-body');
+        const passwordInput = document.getElementById('password-input');
+        const errorMsg = document.getElementById('error-msg');
+        
+        // SENHA PADRÃO DO SISTEMA
+        const SENHA_CORRETA = "senac2026";
+
+        // FUNÇÃO: Verificar Senha
+        function checkPassword() {
+            const digitado = passwordInput.value;
+            
+            if (digitado.toUpperCase() === SENHA_CORRETA.toUpperCase()) {
+                // Senha correta
+                localStorage.setItem('senac_auth', 'true'); // Salva login
+                showContent();
+            } else {
+                // Senha incorreta
+                errorMsg.style.display = 'flex';
+                passwordInput.classList.add('error');
+                passwordInput.value = '';
+                passwordInput.focus();
+            }
+        }
+        
+        // Remove erro ao digitar
+        passwordInput.addEventListener('input', () => {
+            errorMsg.style.display = 'none';
+            passwordInput.classList.remove('error');
+        });
+
+        // FUNÇÕES DE EXIBIÇÃO
+        function showContent() {
+            loginScreen.style.display = 'none';
+            siteContent.classList.remove('hidden-section');
+            body.classList.remove('locked');
+            // Garante que a aba de Boas-Vindas é carregada primeiro
+            switchTab('boas-vindas'); 
+        }
+
+        function hideContent() {
+            loginScreen.style.display = 'flex';
+            siteContent.classList.add('hidden-section');
+            body.classList.add('locked');
+            localStorage.removeItem('senac_auth'); // Logout
+        }
+        
+        function logout() {
+            hideContent();
+            location.reload();
+        }
+
+        // LÓGICA PRINCIPAL (Ao carregar a página)
+        document.addEventListener("DOMContentLoaded", function() {
+            // Verifica se o usuário já digitou a senha anteriormente
+            const isLogged = localStorage.getItem('senac_auth');
+            
+            if (isLogged === 'true') {
+                showContent();
+            } else {
+                // Permanece na tela de login
+                passwordInput.focus();
+            }
+        });
+
+        // --- Funções Originais do Site (Abas e Menu) ---
+        function switchTab(tabName) {
+            // Esconde todas as views
+            document.getElementById('view-boas-vindas').classList.add('hidden-section');
+            document.getElementById('view-cronograma').classList.add('hidden-section');
+            document.getElementById('view-documentos').classList.add('hidden-section');
+            document.getElementById('view-equipe').classList.add('hidden-section');
+            
+            // Remove o estado ativo de todos os botões
+            document.getElementById('btn-boas-vindas').classList.remove('active');
+            document.getElementById('btn-cronograma').classList.remove('active');
+            document.getElementById('btn-documentos').classList.remove('active');
+            document.getElementById('btn-equipe').classList.remove('active');
+
+            // Ativa a view e o botão correto
+            document.getElementById('view-' + tabName).classList.remove('hidden-section');
+            document.getElementById('btn-' + tabName).classList.add('active');
+            
+            const title = document.getElementById('hero-title');
+            const sub = document.getElementById('hero-subtitle');
+            
+            if(tabName === 'boas-vindas') {
+                title.innerText = "Bem-Vindo(a) Supervisor(a)!";
+                sub.innerText = "Portal de apoio para a supervisão da Prática Profissional do Senac PR.";
+            } else if(tabName === 'cronograma') {
+                title.innerText = "Fluxo de Monitoramento";
+                sub.innerText = "Guia oficial para supervisão de práticas profissionais - Senac PR";
+            } else if (tabName === 'documentos') {
+                title.innerText = "Central de Documentos";
+                sub.innerText = "Baixe todos os arquivos necessários.";
+            } else {
+                title.innerText = "Equipe Técnica";
+                sub.innerText = "Contatos e responsáveis pedagógicos.";
+            }
+            document.getElementById('mobile-menu').style.display = 'none';
+        }
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+        }
+
+        function filterDocuments() {
+            let input = document.getElementById('doc-search');
+            let filter = input.value.toUpperCase();
+            let cards = document.getElementsByClassName('doc-card');
+            for (let i = 0; i < cards.length; i++) {
+                let h4 = cards[i].getElementsByTagName("h4")[0];
+                if (h4) {
+                    let txtValue = h4.textContent || h4.innerText;
+                    cards[i].style.display = (txtValue.toUpperCase().indexOf(filter) > -1) ? "" : "none";
+                }
+            }
+        }
+    </script>
+</body>
+</html>
